@@ -40,17 +40,6 @@ public class DipendenteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(nuovoDipendente);
     }
 
-    // Modifica un dipendente esistente
-    @PutMapping("/{id}")
-    public ResponseEntity<Dipendente> updateDipendente(@PathVariable Long id, @RequestBody Dipendente dipendenteDetails) {
-        Dipendente dipendenteAggiornato = dipendenteService.updateDipendente(id, dipendenteDetails);
-        if (dipendenteAggiornato != null) {
-            return ResponseEntity.ok(dipendenteAggiornato);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-    }
-
     // Elimina un dipendente
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDipendente(@PathVariable Long id) {
