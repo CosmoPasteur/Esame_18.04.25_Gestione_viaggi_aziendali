@@ -25,6 +25,6 @@ public class Viaggio {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private StatoViaggio statoViaggio;
+    private StatoViaggio stato;
 
 }
