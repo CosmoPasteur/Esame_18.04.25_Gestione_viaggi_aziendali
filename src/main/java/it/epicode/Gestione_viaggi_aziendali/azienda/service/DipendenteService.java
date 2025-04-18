@@ -30,23 +30,6 @@ public class DipendenteService {
         return dipendenteRepository.save(dipendente);
     }
 
-
-    // Modifica un dipendente esistente
-    public Dipendente updateDipendente(Long id, Dipendente dipendenteDetails) {
-        Optional<Dipendente> optionalDipendente = dipendenteRepository.findById(id);
-        if (optionalDipendente.isPresent()) {
-            Dipendente dipendente = optionalDipendente.get();
-            dipendente.setUsername(dipendenteDetails.getUsername());
-            dipendente.setNome(dipendenteDetails.getNome());
-            dipendente.setCognome(dipendenteDetails.getCognome());
-            dipendente.setEmail(dipendenteDetails.getEmail());
-            dipendente.setImmagineProfiloPath(dipendenteDetails.getImmagineProfiloPath());
-            return dipendenteRepository.save(dipendente);
-        } else {
-            return null; // Se il dipendente non esiste
-        }
-    }
-
     // Elimina un dipendente
     public void deleteDipendente(Long id) {
         dipendenteRepository.deleteById(id);
