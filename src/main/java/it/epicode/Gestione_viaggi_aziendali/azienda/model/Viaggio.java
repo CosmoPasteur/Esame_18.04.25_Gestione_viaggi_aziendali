@@ -1,15 +1,19 @@
 package it.epicode.Gestione_viaggi_aziendali.azienda.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "viaggi")
 public class Viaggio {
     @Id
-    @GeneratedValue(strategy =)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    private Long id;
+
+
 }
