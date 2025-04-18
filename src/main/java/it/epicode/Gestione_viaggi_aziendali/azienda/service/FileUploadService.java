@@ -1,6 +1,6 @@
 package it.epicode.Gestione_viaggi_aziendali.azienda.service;
 
-import lombok.Value;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
