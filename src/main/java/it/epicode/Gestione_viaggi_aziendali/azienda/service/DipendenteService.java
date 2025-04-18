@@ -14,30 +14,38 @@ public class DipendenteService {
     @Autowired
     private DipendenteRepository dipendenteRepository;
 
-    public List<Dipendente> getAllDipendenti() { return dipendenteRepository.findAll(); }
-
-    public Dipendente getDipendenteById(Long id) {
-        Optional<Dipendente> dipendente = dipendenteRepository.findById(id);
-        return dipendente.orElse(null); // Se non trovato, restituisce null
+    // Recupera tutti i dipendenti
+    public List<Dipendente> getAllDipendenti() {
+        return dipendenteRepository.findAll();
     }
 
+    // Recupera un dipendente per ID
+    public Dipendente getDipendenteById(Long id) {
+        Optional<Dipendente> dipendente = dipendenteRepository.findById(id);
+        return dipendente.orElse(null); // Restituisce null se non trovato
+    }
+
+    // Crea un nuovo dipendente
     public Dipendente createDipendente(Dipendente dipendente) {
         return dipendenteRepository.save(dipendente);
     }
 
-    /*public Dipendente updateDipendente(Long id, Dipendente dipendenteDetails) {
-        Optional<Dipendente> dipendenteOptional = dipendenteRepository.findById(id);
-        if (dipendenteOptional.isPresent()) {
-            Dipendente dipendente = dipendenteOptional.get();
+
+    // Modifica un dipendente esistente
+    public Dipendente updateDipendente(Long id, Dipendente dipendenteDetails) {
+        Optional<Dipendente> optionalDipendente = dipendenteRepository.findById(id);
+        if (optionalDipendente.isPresent()) {
+            Dipendente dipendente = optionalDipendente.get();
             dipendente.setUsername(dipendenteDetails.getUsername());
             dipendente.setNome(dipendenteDetails.getNome());
             dipendente.setCognome(dipendenteDetails.getCognome());
             dipendente.setEmail(dipendenteDetails.getEmail());
             dipendente.setImmagineProfiloPath(dipendenteDetails.getImmagineProfiloPath());
             return dipendenteRepository.save(dipendente);
+        } else {
+            return null; // Se il dipendente non esiste
         }
-        return null; // Se non trovato, restituisce null
-    }*/
+    }
 
     // Elimina un dipendente
     public void deleteDipendente(Long id) {

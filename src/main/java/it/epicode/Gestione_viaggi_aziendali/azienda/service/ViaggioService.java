@@ -1,5 +1,6 @@
 package it.epicode.Gestione_viaggi_aziendali.azienda.service;
 
+import it.epicode.Gestione_viaggi_aziendali.azienda.model.StatoViaggio;
 import it.epicode.Gestione_viaggi_aziendali.azienda.model.Viaggio;
 import it.epicode.Gestione_viaggi_aziendali.azienda.repository.ViaggioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ public class ViaggioService {
     // Recupera un viaggio per ID
     public Viaggio getViaggioById(Long id) {
         Optional<Viaggio> viaggio = viaggioRepository.findById(id);
-        return viaggio.orElse(null); // Se non trovato, restituisce null
+        return viaggio.orElse(null); // Restituisce null se non trovato
     }
 
     // Crea un nuovo viaggio
@@ -32,13 +33,14 @@ public class ViaggioService {
 
     // Modifica lo stato di un viaggio
     public Viaggio updateStatoViaggio(Long id, String stato) {
-        Optional<Viaggio> viaggioOptional = viaggioRepository.findById(id);
-        if (viaggioOptional.isPresent()) {
-            Viaggio viaggio = viaggioOptional.get();
-            viaggio.setStato(stato); // Stato: "in programma" o "completato"
-            return viaggioRepository.save(viaggio);
+        Optional<Viaggio> viaggio = viaggioRepository.findById(id);
+        if (viaggio.isPresent()) {
+            Viaggio viaggioEsistente = viaggio.get();
+            viaggioEsistente.setStato(StatoViaggio.valueOf(stato));
+            return viaggioRepository.save(viaggioEsistente);
+        } else {
+            return null; // Se il viaggio non esiste
         }
-        return null; // Se viaggio non trovato, restituisce null
     }
 
     // Elimina un viaggio
