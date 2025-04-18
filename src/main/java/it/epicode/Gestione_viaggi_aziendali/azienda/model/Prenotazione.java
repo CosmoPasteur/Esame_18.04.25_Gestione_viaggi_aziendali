@@ -11,20 +11,26 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "viaggi")
-public class Viaggio {
+@Table(name = "prenotazioni")
+public class Prenotazione {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    @Column(nullable = false)
-    private String destinazione;
+    @ManyToOne
+    @JoinColumn(name = "dipendente_id")
+    private Dipendente dipendente;
+
+    @ManyToOne
+    @JoinColumn(name = "viaggio_id")
+    private Viaggio viaggio;
 
     @Column(nullable = false)
-    private LocalDate data;
+    private LocalDate dataRichiesta;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private StatoViaggio statoViaggio;
+    private String note;
+
+    private String preferenze;
 
 }
