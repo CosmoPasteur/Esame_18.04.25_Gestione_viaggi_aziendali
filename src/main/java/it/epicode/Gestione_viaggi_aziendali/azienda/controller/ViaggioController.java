@@ -1,61 +1,67 @@
 package it.epicode.Gestione_viaggi_aziendali.azienda.controller;
 
-import it.epicode.Gestione_viaggi_aziendali.azienda.model.Viaggio;
+import it.epicode.Gestione_viaggi_aziendali.azienda.dto.StatoDTO;
+import it.epicode.Gestione_viaggi_aziendali.azienda.dto.ViaggioDTO;
+import it.epicode.Gestione_viaggi_aziendali.azienda.entities.Viaggio;
 import it.epicode.Gestione_viaggi_aziendali.azienda.service.ViaggioService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import it.epicode.Gestione_viaggi_aziendali.azienda.exception.BadRequestException;
 
-import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping
+@RequestMapping("/viaggi")
 public class ViaggioController {
 
     @Autowired
     private ViaggioService viaggioService;
 
-    // Recupera tutti i viaggi
     @GetMapping
-    public List<Viaggio> getAllViaggi() {
-        return viaggioService.getAllViaggi();
+    public Page<Viaggio> getAllTrips(@RequestParam(defaultValue = "0") int page,
+                                     @RequestParam(defaultValue = "10") int size,
+                                     @RequestParam(defaultValue = "date") String sortBy) {
+        return viaggioService.findAllViaggi(page, size, sortBy);
     }
 
-    // Recupera un viaggio per ID
-    @GetMapping("/{id}")
-    public ResponseEntity<Viaggio> getViaggioById(@PathVariable Long id) {
-        Viaggio viaggio = viaggioService.getViaggioById(id);
-        if (viaggio != null) {
-            return ResponseEntity.ok(viaggio);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-    }
-
-    // Crea un nuovo viaggio
     @PostMapping
-    public ResponseEntity<Viaggio> createViaggio(@RequestBody Viaggio viaggio) {
-        Viaggio nuovoViaggio = viaggioService.createViaggio(viaggio);
-        return ResponseEntity.status(HttpStatus.CREATED).body(nuovoViaggio);
+    @ResponseStatus(HttpStatus.CREATED)
+    public Viaggio saveTrip(@RequestBody @Validated ViaggioDTO body, BindingResult bindingResult) {
+        if (bindingResult.hasErrors())
+            throw new BadRequestException(bindingResult.getAllErrors().stream().map(DefaultMessageSourceResolvable::getDefaultMessage).collect(Collectors.joining(", ")));
+        return viaggioService.saveViaggio(body);
     }
 
-    // Modifica lo stato di un viaggio
-    @PutMapping("/{id}/stato")
-    public ResponseEntity<Viaggio> updateStatoViaggio(@PathVariable Long id, @RequestBody String stato) {
-        Viaggio viaggioAggiornato = viaggioService.updateStatoViaggio(id, stato);
-        if (viaggioAggiornato != null) {
-            return ResponseEntity.ok(viaggioAggiornato);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+    @PatchMapping("/{viaggioId}/stato")
+    public Viaggio modifyStatus(@PathVariable Long viaggioId, @RequestBody @Validated StatoDTO body,
+                                BindingResult bindingResult) {
+        if (bindingResult.hasErrors())
+            throw new BadRequestException(bindingResult.getAllErrors().stream().map(DefaultMessageSourceResolvable::getDefaultMessage).collect(Collectors.joining(", ")));
+        return viaggioService.findByIdAndUpdateStato(viaggioId, body);
     }
 
-    // Elimina un viaggio
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteViaggio(@PathVariable Long id) {
-        viaggioService.deleteViaggio(id);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    @GetMapping("/{viaggioId}")
+    public Viaggio getSingleTrip(@PathVariable Long viaggioId) {
+        return viaggioService.findViaggioById(viaggioId);
+    }
+
+    @PutMapping("/{viaggioId}")
+    public Viaggio modifyTrip(@PathVariable Long viaggioId, @RequestBody @Validated ViaggioDTO body,
+                              BindingResult bindingResult) {
+        if (bindingResult.hasErrors())
+            throw new BadRequestException(bindingResult.getAllErrors().stream().map(DefaultMessageSourceResolvable::getDefaultMessage).collect(Collectors.joining(", ")));
+        return viaggioService.findViaggioByIdAndUpdate(viaggioId, body);
+    }
+
+    @DeleteMapping("/{viaggioId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteTrip(@PathVariable Long viaggioId) {
+        viaggioService.findViaggioByIdAndDelete(viaggioId);
     }
 
 }

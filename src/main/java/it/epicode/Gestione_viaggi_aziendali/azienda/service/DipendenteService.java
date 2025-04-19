@@ -1,12 +1,18 @@
 package it.epicode.Gestione_viaggi_aziendali.azienda.service;
 
-import it.epicode.Gestione_viaggi_aziendali.azienda.model.Dipendente;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import it.epicode.Gestione_viaggi_aziendali.azienda.dto.DipendenteDTO;
+import it.epicode.Gestione_viaggi_aziendali.azienda.entities.Dipendente;
+import it.epicode.Gestione_viaggi_aziendali.azienda.exception.BadRequestException;
+import it.epicode.Gestione_viaggi_aziendali.azienda.exception.NotFoundException;
 import it.epicode.Gestione_viaggi_aziendali.azienda.repository.DipendenteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class DipendenteService {
@@ -14,34 +20,58 @@ public class DipendenteService {
     @Autowired
     private DipendenteRepository dipendenteRepository;
 
-    // Recupera tutti i dipendenti
-    public List<Dipendente> getAllDipendenti() {
+    @Autowired
+    private Cloudinary cloudinary;
+
+    public List<Dipendente> findAllDipendenti() {
         return dipendenteRepository.findAll();
     }
 
-    // Recupera un dipendente per ID
-    public Dipendente getDipendenteById(Long id) {
-        Optional<Dipendente> dipendente = dipendenteRepository.findById(id);
-        return dipendente.orElse(null); // Restituisce null se non trovato
+    public Dipendente saveDipendente(DipendenteDTO body) {
+        if (dipendenteRepository.existsByUsername(body.username()))
+            throw new BadRequestException("Username already in use");
+        if (dipendenteRepository.existsByEmail(body.email())) throw new BadRequestException("Email already in use");
+        return dipendenteRepository.save(new Dipendente(body.username(), body.nome(), body.cognome(), body.email()));
     }
 
-    // Crea un nuovo dipendente
-    public Dipendente createDipendente(Dipendente dipendente) {
-        return dipendenteRepository.save(dipendente);
+    public Dipendente findDipendenteById(Long dipendenteId) {
+        return dipendenteRepository.findById(dipendenteId).orElseThrow(() -> new NotFoundException(dipendenteId, "Dipendente"
+        ));
     }
 
-    // Elimina un dipendente
-    public void deleteDipendente(Long id) {
-        dipendenteRepository.deleteById(id);
+    public Dipendente findDipendenteByIdAndUpdate(Long DipendenteId, DipendenteDTO body) {
+        Dipendente searched = findDipendenteById(DipendenteId);
+        if (!searched.getCognome().equals(body.cognome()) || !searched.getNome().equals(body.nome())) {
+            if (searched.getAvatarUrl().equals("https://ui-avatars.com/api/?name=" + searched.getNome() + "+" + searched.getCognome()))
+                searched.setAvatarUrl("https://ui-avatars.com/api/?name=" + body.nome() + "+" + body.cognome());
+        }
+        if (!body.username().equals(searched.getUsername())) {
+            if (dipendenteRepository.existsByUsername(body.username()))
+                throw new BadRequestException("Username already in use");
+            searched.setUsername(body.username());
+        }
+        if (!body.email().equals(searched.getEmail())) {
+            if (dipendenteRepository.existsByEmail(body.email())) throw new BadRequestException("Email already in use");
+            searched.setEmail(body.email());
+        }
+        searched.setNome(body.nome());
+        searched.setCognome(body.cognome());
+        return dipendenteRepository.save(searched);
     }
 
-    // Trova un dipendente per username
-    public Dipendente getDipendenteByUsername(String username) {
-        return dipendenteRepository.findByUsername(username);
+    public void findDipendenteByIdAndDelete(Long dipendenteId) {
+        Dipendente searched = findDipendenteById(dipendenteId);
+        dipendenteRepository.delete(searched);
     }
 
-    // Trova un dipendente per email
-    public Dipendente getDipendenteByEmail(String email) {
-        return dipendenteRepository.findByEmail(email);
+    public void uploadAvatar(MultipartFile file, Long dipendenteId) {
+        try {
+            Dipendente searched = findDipendenteById(dipendenteId);
+            String url = (String) cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap()).get("url");
+            searched.setAvatarUrl(url);
+            dipendenteRepository.save(searched);
+        } catch (IOException e) {
+            throw new BadRequestException("File provided not supported");
+        }
     }
 }

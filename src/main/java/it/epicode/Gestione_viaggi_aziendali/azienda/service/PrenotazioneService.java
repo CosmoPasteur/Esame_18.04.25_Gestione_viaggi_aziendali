@@ -1,12 +1,20 @@
 package it.epicode.Gestione_viaggi_aziendali.azienda.service;
 
-import it.epicode.Gestione_viaggi_aziendali.azienda.model.Dipendente;
-import it.epicode.Gestione_viaggi_aziendali.azienda.model.Prenotazione;
-import it.epicode.Gestione_viaggi_aziendali.azienda.model.Viaggio;
+import it.epicode.Gestione_viaggi_aziendali.azienda.dto.PrenotazioneDTO;
+import it.epicode.Gestione_viaggi_aziendali.azienda.entities.Dipendente;
+import it.epicode.Gestione_viaggi_aziendali.azienda.entities.Prenotazione;
+import it.epicode.Gestione_viaggi_aziendali.azienda.entities.Viaggio;
+import it.epicode.Gestione_viaggi_aziendali.azienda.service.ViaggioService;
+import it.epicode.Gestione_viaggi_aziendali.azienda.exception.NotFoundException;
 import it.epicode.Gestione_viaggi_aziendali.azienda.repository.DipendenteRepository;
 import it.epicode.Gestione_viaggi_aziendali.azienda.repository.PrenotazioneRepository;
 import it.epicode.Gestione_viaggi_aziendali.azienda.repository.ViaggioRepository;
+import it.epicode.Gestione_viaggi_aziendali.azienda.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -16,39 +24,41 @@ import java.util.Optional;
 public class PrenotazioneService {
 
     @Autowired
-    private PrenotazioneRepository prenotazioneRepository;
-
+    private PrenotazioneRepository  prenotazioneRepository;
     @Autowired
-    private DipendenteRepository dipendenteRepository;
-
+    private DipendenteService dipendenteService;
     @Autowired
-    private ViaggioRepository viaggioRepository;
+    private ViaggioService viaggioService;
 
-    // Crea una nuova prenotazione
-    public Prenotazione createPrenotazione(Long dipendenteId, Long viaggioId, LocalDate dataRichiesta, String note) {
-        // Verifica se il dipendente ha già una prenotazione per la stessa data
-        if (prenotazioneRepository.existsByDipendenteIdAndDataRichiesta(dipendenteId, dataRichiesta)) {
-            return null; // Prenotazione già esistente per quella data
+    public Page<Prenotazione> findAllPrenotazioni(int page, int size, String sortBy, Long dipendenteId) {
+        if (dipendenteId != null) {
+            Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+            Dipendente dipendente = dipendenteService.findDipendenteById(dipendenteId);
+            return prenotazioneRepository.findByDipendente(dipendente, pageable);
         }
-
-        // Recupera dipendente e viaggio
-        Optional<Dipendente> dipendenteOptional = dipendenteRepository.findById(dipendenteId);
-        Optional<Viaggio> viaggioOptional = viaggioRepository.findById(viaggioId);
-
-        if (dipendenteOptional.isPresent() && viaggioOptional.isPresent()) {
-            Prenotazione prenotazione = new Prenotazione();
-            prenotazione.setDipendente(dipendenteOptional.get());
-            prenotazione.setViaggio(viaggioOptional.get());
-            prenotazione.setDataRichiesta(dataRichiesta);
-            prenotazione.setNote(note);
-            return prenotazioneRepository.save(prenotazione);
-        }
-        return null; // Se dipendente o viaggio non esistono, restituisce null
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        return prenotazioneRepository.findAll(pageable);
     }
 
-    // Elimina una prenotazione
-    public void deletePrenotazione(Long id) {
-        prenotazioneRepository.deleteById(id);
+    public Prenotazione savePrenotazione(PrenotazioneDTO body) {
+        Dipendente dipendente = dipendenteService.findDipendenteById(body.dipendenteId());
+        Viaggio Viaggio = viaggioService.findViaggioById(body.viaggioId());
+        if (prenotazioneRepository.existsByViaggio(Viaggio))
+            throw new BadRequestException("Viaggio already assigned");
+        if (prenotazioneRepository.checkIfDipendenteIsNotAvailable(dipendente, Viaggio.getData()))
+            throw new BadRequestException("dipendente unavailable for Viaggio's date");
+        Prenotazione prenotazione= new Prenotazione(Viaggio, dipendente);
+        if (body.preferenza() != null) prenotazione.setPreferenza(body.preferenza());
+        else prenotazione.setPreferenza("N/A");
+        return prenotazioneRepository.save(prenotazione);
     }
 
+    public Prenotazione findPrenotazioniById(Long prenotazioneId) {
+        return prenotazioneRepository.findById(prenotazioneId).orElseThrow(() -> new NotFoundException(prenotazioneId, "prenotazioni"));
+    }
+
+    public void findPrenotazioniByIdAndDelete(Long prenotazioneId) {
+        Prenotazione prenotazione = findPrenotazioniById(prenotazioneId);
+        prenotazioneRepository.delete(prenotazione);
+    }
 }

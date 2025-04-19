@@ -1,15 +1,13 @@
 package it.epicode.Gestione_viaggi_aziendali.azienda.dto;
 
-import lombok.Data;
+import jakarta.validation.constraints.NotNull;
 
-import java.time.LocalDate;
+public record PrenotazioneDTO (
 
-@Data
-public class PrenotazioneDTO {
+        String preferenza,
+        @NotNull(message = "Viaggio obbligatorio")
+        Long viaggioId,
+        @NotNull(message = "Dipendente obbligatorio")
+        Long dipendenteId) {
 
-    private Long id;
-    private Long viaggioId;
-    private Long dipendenteId;
-    private LocalDate dataRichiesta;
-    private String note;
 }
